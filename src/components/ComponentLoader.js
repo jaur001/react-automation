@@ -27,7 +27,7 @@ function ComponentLoader(props) {
       setReduxLoaded(true);
     }
   }, [props, newState, reduxLoaded]);
-  if (!reduxLoaded) return <React.Fragment/>;
+  if (!reduxLoaded && reduxIsRequired(newState)) return <React.Fragment/>;
   return pageStructure.render();
 }
 export default ComponentLoader;
