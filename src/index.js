@@ -1,6 +1,5 @@
-import React from 'react'
-import styles from './styles.module.css'
+import PageLoader from "./components/PageLoader";
+import StateController from "./redux/StateController";
+import ReducerBuilder from "./redux/ReducerBuilder";
 
-export const ExampleComponent = ({ text }) => {
-  return <div className={styles.test}>Example Component: {text}</div>
-}
+export {PageLoader,StateController,ReducerBuilder}
