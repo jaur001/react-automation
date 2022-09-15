@@ -2,14 +2,18 @@ import React from 'react'
 import PageReader from "../utils/PageReader";
 import ComponentLoader from "./ComponentLoader";
 
+function getId(parentId,id,suffixId){
+  parentId = parentId ? parentId + "/" : "";
+  suffixId = suffixId ? suffixId : "";
+  return parentId + id + suffixId;
+}
+
 function prepareComponent(populatedComponents,compName){
   const Component = populatedComponents[compName];
-    populatedComponents[compName] = (comp, parentId, suffixId, extraProps) => {
-      parentId = parentId ? parentId + "/" : "";
-      suffixId = suffixId ? suffixId : "";
-      const key = parentId + comp.id + suffixId;
-      return <Component key={key} id={key} {...comp.props} {...extraProps} />;
-    };
+  populatedComponents[compName] = (props) => {
+    const id = getId(props.parentId,props.id,props.suffixId);
+    return <Component key={id} id={id} {...props}>{props.children}</Component>;
+  };
 }
 
 function prepareComponents(components) {
