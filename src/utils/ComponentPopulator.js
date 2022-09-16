@@ -1,3 +1,4 @@
+import React from 'react'
 import { createCopy } from './JsonUtils';
 import ReactAutomationException from './ReactAutomationException'
 
