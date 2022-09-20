@@ -3,8 +3,8 @@ import ComponentPopulator from "../utils/ComponentPopulator";
 import StateController from "../redux/StateController";
 import { useEffect, useMemo, useState } from "react";
 
-function populateComponents(pageStructure,components,resources) {
-  return new ComponentPopulator(components,resources).populateComponents(pageStructure);
+function populateComponents(page,components,resources) {
+  return new ComponentPopulator(components,resources).populateComponents(page);
 }
 
 function reduxIsRequired(state){
@@ -15,7 +15,7 @@ function ComponentLoader(props) {
   const [reduxLoaded,setReduxLoaded] = useState(false);
   const [MainComponent, state] = useMemo(
     () => {
-      return populateComponents(props.pageStructure,props.components,props.resources);
+      return populateComponents(props.page,props.components,props.resources);
     },
     [props]
   );

@@ -1,8 +1,14 @@
 import { HttpParams, HttpClient } from "./HttpClient";
 import ReactAutomationException from "./ReactAutomationException";
 
-const PageReader = {
-  getPageStructure: (path) => {
+class PageReader{
+  static getPages(path){
+    return PageReader.#readJson(path,"Error reading list of pages. Path tried: " + path);
+  }
+  static getPage(path){
+    return PageReader.#readJson(path,"Error reading page. Path tried: " + path);
+  }
+  static #readJson(path,errorMessage){
     let result = {};
     const headers = {
       "Content-Type": "application/json",
@@ -19,7 +25,7 @@ const PageReader = {
         result = body;
       },
       (status, body, headers) => {
-        throw new ReactAutomationException("Error reading Page Structure", body);
+        throw new ReactAutomationException(errorMessage, body);
       }
     );
     HttpClient.makeHttpRequest(params);

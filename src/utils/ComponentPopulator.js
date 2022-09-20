@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 import { createCopy } from './JsonUtils';
 import ReactAutomationException from './ReactAutomationException'
 
@@ -32,24 +32,24 @@ export default class ComponentPopulator {
   validateComponent(json) {
     if (!json.hasOwnProperty("Component"))
       throw new ReactAutomationException("Missing 'Component' attribute!", "'Component' attribute is missing in json.");
-    if (!this.components.hasOwnProperty(json["Component"]))
-      throw new ReactAutomationException("Component does not exist!", "The component provided does not exist or was not provided to the PageLoader");
   }
 
   getComponent(id,defaultProps,compName){
-    const Component = this.components[compName];
+    const Component = this.components[compName]?this.components[compName]:compName;
     return function(extraProps){
-      const props = {...defaultProps,...extraProps}
-      return <Component id={id} {...props}/>
+      const props = {...defaultProps,...extraProps};
+      const fullId = ComponentPopulator.getComponentId(compName,props.parentId,id,props.suffixId);
+      const children = ComponentPopulator.getChildren(props.children)
+      return <Component key={fullId} id={fullId} {...props}>{children}</Component>
     };
   }
 
   populatePropValue(json, propValue) {
     if (typeof propValue !== 'function'){
-      if(this.components.hasOwnProperty(propValue))
-        return this.getComponent(json["id"],json["props"],propValue)
-      else{
+      if(this.resources.hasOwnProperty(propValue))
         return this.resources[propValue];
+      else{
+        return this.getComponent(json["id"],json["props"],propValue)
       };
     }
     return propValue;
@@ -82,6 +82,19 @@ export default class ComponentPopulator {
   matchComponentOrResource(propValue){
     return this.components.hasOwnProperty(propValue) ||
       this.resources.hasOwnProperty(propValue);
+  }
+
+  static getChildren(children){
+    if(Array.isArray(children))
+        return children.map((Component,index) => <Component key={index} />);
+    return children;
+  }
+
+  static getComponentId(compName,parentId,id,suffixId){
+    parentId = parentId ? parentId + "/" : "";
+    suffixId = suffixId ? suffixId : "";
+    id = id ? id : compName;
+    return parentId + id + suffixId;
   }
 
   static isComponent(json) {
