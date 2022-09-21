@@ -1,31 +1,59 @@
 import React from 'react'
 import ComponentPopulator from "../utils/ComponentPopulator";
 import StateController from "../redux/StateController";
-import { useEffect, useMemo, useState } from "react";
 
-function populateComponents(page,components,resources) {
-  return new ComponentPopulator(components,resources).populateComponents(page);
-}
 
-function reduxIsRequired(state){
-  return Object.keys(state).length >0;
-}
+export default class ComponentLoader extends React.Component{
 
-function ComponentLoader(props) {
-  const [reduxLoaded,setReduxLoaded] = useState(false);
-  const [MainComponent, state] = useMemo(
-    () => {
-      return populateComponents(props.page,props.components,props.resources);
-    },
-    [props]
-  );
-  useEffect(() => {
-    if(reduxIsRequired(state) && !reduxLoaded){
-      StateController.populateState(state,props.dispatch);
-      setReduxLoaded(true);
+  constructor(props){
+    super(props);
+    this.state = this.initState();
+  }
+
+  initState(){
+    const [MainComponent, reduxState] = this.populateComponents();
+    return {
+      reduxLoaded: false,
+      MainComponent: MainComponent,
+      reduxState: reduxState
     }
-  }, [props, state, reduxLoaded]);
-  if (!reduxLoaded && reduxIsRequired(state)) return <React.Fragment/>;
-  return <MainComponent/>;
+  }
+
+  componentDidMount(){
+    if(this.reduxIsRequired()){
+      StateController.populateState(this.state.reduxState,this.props.dispatch);
+      this.setState({reduxLoaded:true});
+    }
+  }
+
+  componentDidUpdate(prevProps){
+    if(prevProps !== this.props)
+      this.setState(this.initState());
+    else if(this.reduxIsRequired() && !this.state.reduxLoaded){
+      StateController.populateState(this.state.reduxState,this.props.dispatch);
+      this.setState({reduxLoaded:true});
+    }
+  }
+
+  shouldComponentUpdate(nextProps,nextState){
+    return this.props !== nextProps ||
+          this.state !== nextState ||
+          this.state.reduxLoaded !== nextState.reduxLoaded;
+  }
+
+  populateComponents(){
+    return new ComponentPopulator(this.props.components,this.props.resources)
+          .populateComponents(this.props.page);
+  }
+  
+  reduxIsRequired(){
+    return Object.keys(this.state.reduxState).length > 0;
+  }
+
+  render() {
+    if(this.reduxIsRequired() && !this.state.reduxLoaded) return <React.Fragment/>;
+    const MainComponent = this.state.MainComponent;
+    return <MainComponent/>;
+  }
 }
-export default ComponentLoader;
+
