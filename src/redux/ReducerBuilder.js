@@ -13,7 +13,7 @@ export default class ReducerBuilder{
 }
 
 export const actions = {
-  setProperty: (state, action) => {
+  setStateProp: (state, action) => {
     const newState = { ...state };
     action.setStateProp(newState,action.value);
     return newState;
