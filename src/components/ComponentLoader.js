@@ -1,6 +1,5 @@
 import React from 'react'
 import ComponentPopulator from "../utils/ComponentPopulator";
-import StateController from "../redux/StateController";
 
 
 export default class ComponentLoader extends React.Component{
@@ -19,9 +18,16 @@ export default class ComponentLoader extends React.Component{
     }
   }
 
+  populateState(){
+    this.props.dispatch({
+      type: "populateState",
+      newState: this.state.reduxState,
+    });
+  }
+
   componentDidMount(){
     if(this.reduxIsRequired()){
-      StateController.populateState(this.state.reduxState,this.props.dispatch);
+      this.populateState();
       this.setState({reduxLoaded:true});
     }
   }
@@ -30,7 +36,7 @@ export default class ComponentLoader extends React.Component{
     if(prevProps !== this.props)
       this.setState(this.initState());
     else if(this.reduxIsRequired() && !this.state.reduxLoaded){
-      StateController.populateState(this.state.reduxState,this.props.dispatch);
+      this.populateState();
       this.setState({reduxLoaded:true});
     }
   }

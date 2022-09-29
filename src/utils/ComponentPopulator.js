@@ -1,4 +1,3 @@
-import React from 'react';
 import { createCopy } from './JsonUtils';
 import ReactAutomationException from './ReactAutomationException'
 
@@ -11,20 +10,25 @@ export default class ComponentPopulator {
 
   populateComponents(json) {
     const jsonCopy = createCopy(json);
-    const state = {};
-    const MainComponent = this.populateComponent(jsonCopy,state);
-    return [MainComponent,state];
+    const initialState = {};
+    const getStateProp = (state) => {
+      return state;
+    }
+    const MainComponent = this.populateComponent(jsonCopy,initialState,getStateProp);
+    return [MainComponent,initialState];
   }
 
-  populateComponent(json, stateProp) {
+  populateComponent(json,stateProp,getStateProp) {
     this.validateComponent(json);
     if (json.requireRedux){
       stateProp[json.id] = json.initialValue ? json.initialValue : {};
       stateProp = stateProp[json.id];
+      if (json.hasOwnProperty("props"))
+        getStateProp = ComponentPopulator.populateGetterAndSetter(json,getStateProp);
     }
     if (json.hasOwnProperty("props")){
-      const exceptions = json["exception"]?json["exception"]:[];
-      this.checkJson(json["props"], stateProp,exceptions);
+      const exceptions = json.exception?json.exception:[];
+      this.checkJson(json.props, stateProp,getStateProp,exceptions);
     }
     return this.populatePropValue(json,json["Component"]);
   }
@@ -34,13 +38,12 @@ export default class ComponentPopulator {
       throw new ReactAutomationException("Missing 'Component' attribute!", "'Component' attribute is missing in json.");
   }
 
-  getComponent(id,defaultProps,compName){
+  getComponent(defaultProps,compName){
     const Component = this.components[compName]?this.components[compName]:compName;
     return function(extraProps){
       const props = {...defaultProps,...extraProps};
-      const fullId = ComponentPopulator.getComponentId(compName,props.parentId,id,props.suffixId);
       const children = ComponentPopulator.getChildren(props.children)
-      return <Component key={fullId} id={fullId} {...props}>{children}</Component>
+      return <Component {...props}>{children}</Component>
     };
   }
 
@@ -49,30 +52,30 @@ export default class ComponentPopulator {
       if(this.resources.hasOwnProperty(propValue))
         return this.resources[propValue];
       else{
-        return this.getComponent(json["id"],json["props"],propValue)
+        return this.getComponent(json["props"],propValue)
       };
     }
     return propValue;
   }
 
-  checkObject(obj, stateProp,exceptions) {
-    if (Array.isArray(obj)) return this.checkJsonArray(obj, stateProp,exceptions);
-    else if (ComponentPopulator.isComponent(obj)) return this.populateComponent(obj, stateProp);
-    else return this.checkJson(obj,stateProp,exceptions);
+  checkObject(obj,stateProp,getStateProp,exceptions) {
+    if (Array.isArray(obj)) return this.checkJsonArray(obj, stateProp,getStateProp,exceptions);
+    else if (ComponentPopulator.isComponent(obj)) return this.populateComponent(obj,stateProp,getStateProp);
+    else return this.checkJson(obj,stateProp,getStateProp,exceptions);
   }
 
-  checkJsonArray(jsonArray,stateProp,exceptions) {
+  checkJsonArray(jsonArray,stateProp,getStateProp,exceptions) {
     return jsonArray.map((item) => {
       if (typeof item === "object")
-        return this.checkObject(item,stateProp,exceptions);
+        return this.checkObject(item,stateProp,getStateProp,exceptions);
       return item;
     });
   }
 
-  checkJson(json,stateProp,exceptions) {
+  checkJson(json,stateProp,getStateProp,exceptions) {
     for (const prop in json) {
       const propValue = json[prop];
-      if (typeof propValue === "object") json[prop] = this.checkObject(propValue,stateProp,exceptions);
+      if (typeof propValue === "object") json[prop] = this.checkObject(propValue,stateProp,getStateProp,exceptions);
       else if(this.matchComponentOrResource(propValue) && !exceptions.includes(prop))
         json[prop] = this.populatePropValue(json ,propValue);
     }
@@ -90,11 +93,12 @@ export default class ComponentPopulator {
     return children;
   }
 
-  static getComponentId(compName,parentId,id,suffixId){
-    parentId = parentId ? parentId + "/" : "";
-    suffixId = suffixId ? suffixId : "";
-    id = id ? id : compName;
-    return parentId + id + suffixId;
+  static populateGetterAndSetter(json,getStateProp){
+    const getStateParentProp = getStateProp;
+    getStateProp = (state) => getStateParentProp(state)[json.id];
+    json.props["setStateProp"] = (state,newValue) => getStateParentProp(state)[json.id] = newValue;
+    json.props["getStateProp"] = getStateProp;
+    return getStateProp;
   }
 
   static isComponent(json) {

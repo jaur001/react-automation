@@ -1,5 +1,3 @@
-import {actions} from "./actions";
-
 export default class ReducerBuilder{
   static buildReducer(extraActions){
     const actionList = {
@@ -11,5 +9,16 @@ export default class ReducerBuilder{
         return actionList[action.type](state,action);
       return state;
     };
+  }
+}
+
+export const actions = {
+  setProperty: (state, action) => {
+    const newState = { ...state };
+    action.setStateProp(newState,action.value);
+    return newState;
+  },
+  populateState: (state,action) => {
+    return action.newState;
   }
 }
