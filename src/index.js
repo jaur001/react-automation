@@ -1,6 +1,5 @@
 import PageLoader from "./components/PageLoader";
 import PageHandler from "./components/PageHandler";
-import StateController from "./redux/StateController";
-import ReducerBuilder from "./redux/ReducerBuilder";
+import ReducerBuilder,{actions} from "./redux/ReducerBuilder";
 
-export {PageHandler,PageLoader,ReducerBuilder,StateController}
+export {PageHandler,PageLoader,ReducerBuilder,actions}
