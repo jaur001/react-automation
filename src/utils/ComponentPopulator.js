@@ -1,4 +1,5 @@
 import { createCopy } from './JsonUtils';
+import React from 'react';
 import ReactAutomationException from './ReactAutomationException'
 
 export default class ComponentPopulator {
